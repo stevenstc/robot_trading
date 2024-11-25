@@ -50,8 +50,9 @@ class MainApp(MDApp):
         interval = '1h'
 
         klines = self.client.get_historical_klines(str(self.token), interval, int(dt.datetime.timestamp(start) * 1000), int(dt.datetime.timestamp(end) * 1000), limit=1000)
-        self.df_order = pd.DataFrame(klines)
-        self.df_order.columns = ['OpenTime', 'Open', 'High', 'Low', 'Close', 'Volume', 'CloseTime', 'QuoteAssetVolume', 'Trades', 'TakerBuyBase', 'TakerBuyQuote', 'Ignore']
+        columns = ['OpenTime', 'Open', 'High', 'Low', 'Close', 'Volume', 'CloseTime', 'QuoteAssetVolume', 'Trades', 'TakerBuyBase', 'TakerBuyQuote', 'Ignore']
+        self.df_order = pd.concat([klines, columns])
+        self.df_order.columns = columns
         self.df_order['Date'] = pd.to_datetime(self.df_order.OpenTime, unit='ms')
         self.df_order['Close'] = self.df_order['Close'].apply(lambda x: float(x))
         self.df_order['SMA_20'] = self.df_order['Close'].rolling(window = 20).mean()

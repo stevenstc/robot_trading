@@ -1,4 +1,4 @@
-#!D:\Proyectos Aprendizaje\robot de trading\robot_trading\env\Scripts\python.exe
+#!C:\Users\Steven\Documents\GitHub\robot_trading\env\Scripts\python.exe
 
 import sys
 import argparse

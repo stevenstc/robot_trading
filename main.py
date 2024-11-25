@@ -21,7 +21,7 @@ class Grafico(Image):
     pass
 
 class MainApp(MDApp):
-    saldo_money=1000
+    saldo_money=100
     saldo_monedas=0
     status=''
     ultimo_precio=1
@@ -50,9 +50,7 @@ class MainApp(MDApp):
         interval = '1h'
 
         klines = self.client.get_historical_klines(str(self.token), interval, int(dt.datetime.timestamp(start) * 1000), int(dt.datetime.timestamp(end) * 1000), limit=1000)
-        columns = ['OpenTime', 'Open', 'High', 'Low', 'Close', 'Volume', 'CloseTime', 'QuoteAssetVolume', 'Trades', 'TakerBuyBase', 'TakerBuyQuote', 'Ignore']
-        self.df_order = pd.concat([klines, columns])
-        self.df_order.columns = columns
+        self.df_order = pd.DataFrame(klines, columns=list(['OpenTime', 'Open', 'High', 'Low', 'Close', 'Volume', 'CloseTime', 'QuoteAssetVolume', 'Trades', 'TakerBuyBase', 'TakerBuyQuote', 'Ignore']))
         self.df_order['Date'] = pd.to_datetime(self.df_order.OpenTime, unit='ms')
         self.df_order['Close'] = self.df_order['Close'].apply(lambda x: float(x))
         self.df_order['SMA_20'] = self.df_order['Close'].rolling(window = 20).mean()
@@ -89,7 +87,7 @@ class MainApp(MDApp):
                 self.saldo_money = 0
                 self.monedas = coins
                 new_row = {'Date': fecha, 'Close': precio, 'Ultimo_Status': self.status, 'Ultimo_Precio':self.ultimo_precio}
-                self.df = self.df.append(new_row, ignore_index=True)
+                self.df = pd.concat([self.df, pd.DataFrame([new_row])], ignore_index=True )  
         elif self.status == 'compra' and self.monedas > 0:
             if ((baja==False and (precio > media) and (sma_20/self.sma_20_anterior>1.002) and (precio/self.precio_anterior>1.002))
                 or
@@ -101,7 +99,7 @@ class MainApp(MDApp):
                 self.saldo_money = coins*precio
                 self.monedas = 0
                 new_row = {'Date': fecha, 'Close': precio, 'Ultimo_Status': self.status, 'Ultimo_Precio':self.ultimo_precio}
-                self.df = self.df.append(new_row, ignore_index=True)
+                self.df = pd.concat([self.df, pd.DataFrame([new_row])], ignore_index=True )  
 
     def simular(self):
         for index, row in self.df_order.sort_values(by=['Date'], ascending=True).iterrows():
@@ -123,7 +121,8 @@ class MainApp(MDApp):
                     self.saldo_money=0
                     self.monedas = coins
                     new_row = {'Date': fecha, 'Close': precio, 'Ultimo_Status':self.status, 'Ultimo_Precio': self.ultimo_precio}
-                    self.df = self.df.append(new_row, ignore_index=True)                
+                    #df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                    self.df = pd.concat([self.df, pd.DataFrame([new_row])], ignore_index=True )            
             elif self.status == 'compra' and self.monedas > 0:
                 if ((baja==False and (precio>media) and (sma_20/self.sma_20_anterior>1.002) and (precio/self.precio_anterior>1.002))
                     or
@@ -134,7 +133,7 @@ class MainApp(MDApp):
                     self.saldo_money=coins*precio
                     self.monedas = 0
                     new_row = {'Date': fecha, 'Close': precio, 'Ultimo_Status':self.status, 'Ultimo_Precio': self.ultimo_precio}
-                    self.df = self.df.append(new_row, ignore_index=True)
+                    self.df = pd.concat([self.df, pd.DataFrame([new_row])], ignore_index=True )  
             self.sma_20_anterior = sma_20
             self.precio_anterior = precio
         if self.status == 'compra':
@@ -154,7 +153,8 @@ class MainApp(MDApp):
         data['Sell_Signal'] = np.nan 
         data = data[['Date', 'Close', 'Buy_Signal', 'Sell_Signal']]
 
-        graph = pd.concat([grafico, data], ignore_index=True)
+        graph = pd.concat([grafico, data], ignore_index=True )  
+        #pd.append([grafico, data], ignore_index=True)
         graph = graph.sort_values(by=['Date'], ascending=True)      
         graph = graph.set_index(pd.DatetimeIndex(graph['Date'].values))
 
